@@ -81,12 +81,13 @@ onMounted(() => {
                             <div class="container ">
                                 <!-- Single-Line Search Bar -->
                                  <div class="search-bar">
-                                <i class="fas fa-user  d-flex-sta position-absolute  "></i>
+                                    <i class="fa-solid fa-user"></i>
 
-                                <input
+                                    <input
                                     class=" my-search form-control border-0 border-bottom border-white text-white rounded-0 "
                                     type="search" placeholder="Search here..." aria-label="Search" />
-                                <i class="fas fa-user "></i>
+                                <!-- <i class="fa-solid fa-magnifying-glass "></i> -->
+                                <i class="fa-brands fa-searchengin"></i>
                                  </div>
                             </div>
                         </div>
@@ -162,7 +163,7 @@ onMounted(() => {
                     <div class="row  text-white p-2 mb-2">
                         <div class="col">
                             <p class="mt-5"> Weather Forecast </p>
-                            <h1 class="text-5 text-bold">Storm <br>with Heavy Rain</h1>
+                            <h1 class="display-3 fw-semibold fade-text  ">Storm <br>with Heavy Rain</h1>
 
                         </div>
                     </div>
@@ -358,5 +359,13 @@ input::placeholder {
         radial-gradient(var(--R) at left 50% bottom calc(-1*var(--m)*var(--s)), var(--_g)) calc(50% - 2*var(--s)) calc(50% - var(--s)/2 - var(--b)/2)/calc(4*var(--s)) calc(var(--s) + var(--b)) repeat-x,
         radial-gradient(var(--R) at left 50% top calc(-1*var(--m)*var(--s)), var(--_g)) 50% calc(50% + var(--s)/2 + var(--b)/2)/calc(4*var(--s)) calc(var(--s) + var(--b)) repeat-x;
 }
+.fade-text {
+  background: linear-gradient(to right, white, rgba(0, 0, 0, 0));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
 
 </style>
