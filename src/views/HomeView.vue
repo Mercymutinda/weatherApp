@@ -1,26 +1,147 @@
 <script setup>
-import { ref } from 'vue'
-const currentYear = ref(new Date().getFullYear());
+import { ref, watch } from 'vue'
+
 
 import { onMounted } from 'vue'; // Import necessary Vue features
 import Chart from 'chart.js/auto'; // Import Chart.js
 
 
+const currentYear = ref(new Date().getFullYear());
+const currentDateTime = ref('');
+const userLocation = ref('');
 
-onMounted(() => {
+// const api_key="8398099bebb70f367d90d2ef7994b1";
+const api_key = "c73622a39f2d4383a72ce87dbb5cc01e";
+
+const weatherData = ref([]);
+const isLoading = ref(false);
+const city_name = ref();
+let error = ref(null);
+const lat = ref();
+const long = ref();
+
+
+const skycondition = ref(null)
+
+//get weather function
+const getWeather = async () => {
+    console.log('Getting weather...');
+    isLoading.value = true;
+    try {
+
+        const location = city_name.value || userLocation.value || 'Nairobi'; //if no location detected, it'll forward to Nairobi
+        // const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat.value}&lon=${long.value}&appid=${api_key}`);
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=iceland&appid=${api_key}&units=metric`);
+        console.log(response);
+        if (!response.ok) {
+            throw new Error('Failed to fetch weather data');
+        }
+
+
+        const data = await response.json();
+        console.log(data);
+        weatherData.value = data;
+        console.table(data);
+        console.log(weatherData.value);
+        console.log("mabenda", typeof(weatherData.value.weather?.[0].main));
+        skycondition.value = weatherData.value.weather?.[0].main;
+
+
+    } catch (err) {
+        console.error('Error fetching weather:', err);
+        error.value = err.message;
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+//location function
+
+const getLocation = () => {
+    console.log('Getting location...');
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+                // lat.value = latitude;
+                // long.value = longitude;
+                console.log('Latitude:', latitude);
+                console.log('Longitude:', longitude);
+                // Use OpenWeatherMap Reverse Geocoding API to get location name
+                const reverseGeocodingUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${api_key}`;
+
+                try {
+                    const response = await fetch(reverseGeocodingUrl);
+                    console.log(response);
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch location data');
+                    }
+                    const data = await response.json();
+
+                    // Extract location name (city, country)
+                    if (data.length > 0) {
+                        const locationName = `${data[0].name}`;
+                        userLocation.value = locationName;
+                    } else {
+                        userLocation.value = "Location not found";
+                    }
+                } catch (err) {
+                    console.error('Error fetching location name:', err);
+                    userLocation.value = "Unable to fetch location";
+                }
+            },
+            (err) => {
+                console.error('Error getting location:', err);
+                userLocation.value = "Location access denied";
+            }
+        );
+    } else {
+        console.error('Geolocation is not supported by this browser.');
+        userLocation.value = "Geolocation not supported";
+    }
+};
+
+
+
+//function to update current date and time
+const updateDateTime = () => {
+    const now = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    currentDateTime.value = now.toLocaleDateString('en-US', options);
+};
+
+
+
+
+onMounted(async () => {
+   await getLocation(); //wait for location to be fetched
+   await getWeather(); //wait for weather to be fetched
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    
+
+    //  // Watch for future changes to userLocation
+    //  watch(userLocation, (newLocation) => {
+    //     if (newLocation) {
+    //         getWeather(); // Fetch weather data whenever userLocation changes
+    //     }
+    // });
+
+
+
     // Get the canvas element by its ID
     const ctx = document.getElementById('lineChart').getContext('2d');
 
     // Define labels for the x-axis
-    const labels = [-10, -5, 0, , 5, 10, 15, 20, 25];
+    const labels = [-10, -5, 0, 5, 10, 15, 20, 25];
 
     // Define the data for the line chart
     const data = {
         labels: labels,
         datasets: [
             {
-                label: ' weather',
-                data: [7, 15, 8, 23, -7, 20, 25, 18, 30],
+                label: ' safety',
+                data: [2, 7, 8, 16, 22, 29, 30, 38, 38],
                 fill: false, // Disable area fill
                 borderColor: 'white', // Line color
                 tension: 0.6, // Line smoothness
@@ -45,16 +166,23 @@ onMounted(() => {
 
 
 
+const backgroundimg = ref('');
+watch(skycondition, (newCondition) => {
+    console.log("Sky condition changed to:", newCondition);
+    
+    const backgrounds = {
+        "Clear": "/sunny-cloud.jpg",
+        "Clouds": "/clouds.jpg",
+        "Rain": "/soft-rain.webp",
+        "Snow": "/snow.jpeg",
+        "Fog": "/fog.webp",
+        "Storm": "/windy.jpg"
+    };
 
+    backgroundimg.value = backgrounds[newCondition] || "/sunny-cloud.jpg";
+});
+console.log("mabenda", weatherData.weather?.[0]?.main);
 
-// const currentDateTime = ref('');
-// onMounted(() => {
-//   setInterval(() => {
-//     const now = new Date();
-//     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-//     currentDateTime.value = now.toLocaleDateString('en-US', options);
-//   }, 1000);
-// });
 
 </script>
 <template>
@@ -69,8 +197,18 @@ onMounted(() => {
         </div>
         <!-- content -->
 
-        <div class="my-image container mt-3"
-            style="background-image: url('/clouds.jpg');background-size: cover; background-position: center; ">
+        <div class="my-image container mt-3" 
+       
+
+        :style="{
+      backgroundImage: 'url(' + backgroundimg + ')',
+      height: '100vh',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center'
+    }"
+        >
+
+
 
             <div class="row border rounded ">
                 <!-- first column -->
@@ -80,26 +218,36 @@ onMounted(() => {
                         <div class="col">
                             <div class="container ">
                                 <!-- Single-Line Search Bar -->
-                                 <div class="search-bar">
+                                <div class="search-bar">
                                     <i class="fa-solid fa-user"></i>
 
                                     <input
-                                    class=" my-search form-control border-0 border-bottom border-white text-white rounded-0 "
-                                    type="search" placeholder="Search here..." aria-label="Search" />
-                                <!-- <i class="fa-solid fa-magnifying-glass "></i> -->
-                                <i class="fa-brands fa-searchengin"></i>
-                                 </div>
+                                         v-model="city_name"
+                                         @keyup.enter="getWeather"
+                                        class=" my-search form-control border-0 border-bottom border-white text-white rounded-0 "
+                                        type="search" 
+                                        placeholder="Search here..." 
+                                        aria-label="Search" 
+                                    />
+                                    <!-- <i class="fa-solid fa-magnifying-glass "></i> -->
+                                    <i class="fa-brands fa-searchengin"
+                                      @click="getWeather"  
+
+                                     ></i>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <!-- Nested Row 2 -->
                     <div class="row  p-2 mb-2">
-                        <div class="col">
+                        <div class="col ">
 
 
                             <div class="row mt-2 my-temp ">
-                                <div class="col-3 mr-3 ">20</div>
-                                <div class="col-3 ml-3">-3</div>
+                                <div class="col-3 ms-3 fs-1 ">
+                                    {{ weatherData.main?.temp.toFixed(1) || "loading..." }}&deg;
+                                </div>
+                                <div class="col-3 ms-5 fs-1">+/-3</div>
                             </div>
 
                         </div>
@@ -107,7 +255,7 @@ onMounted(() => {
                     <!-- Nested Row 3 -->
                     <div class="row mb-2 ">
                         <div class="col ">
-                            <p class="ml-5">0.08%</p>
+                            <p class="ms-5">0.08%</p>
 
                             <div class="row mt-2">
                                 <div class="col-5  ">
@@ -144,11 +292,9 @@ onMounted(() => {
 
                     <!-- Nested Row 5 -->
                     <div class="row  ">
-                        <div class="col mb-0 mt-4">
-                            <h4> Oklohoma City</h4>
-                            <p>Lorem ipsum . Voluptatem, aspernatur obcaecati! Voluptas deleniti sunt quo quaerat ut?
-                                Blanditiis, rem ullam magnam architecto non esse et saepe? Obcaecati ullam distinctio
-                                sapiente.</p>
+                        <div class="col mb-0 mt-5">
+                            <h4> {{  weatherData.name }}</h4>
+                            <p>{{ weatherData.weather?.[0]?.main}}</p>
                         </div>
                     </div>
 
@@ -163,18 +309,20 @@ onMounted(() => {
                     <div class="row  text-white p-2 mb-2">
                         <div class="col">
                             <p class="mt-5"> Weather Forecast </p>
-                            <h1 class="display-3 fw-semibold fade-text  ">Storm <br>with Heavy Rain</h1>
+                            <h1 class="display-3 fw-semibold fade-text  ">{{ weatherData.weather?.[0]?.main }} <br/> {{ weatherData.weather?.[0]?.description }}</h1>
 
                         </div>
                     </div>
                     <!-- Nested Row 2 -->
                     <div class="row  text-white  mb-2">
                         <div class="col">
-                            <p class="year text-light">{{ currentYear }} </p>
+                            <p class="year text-light"> {{ currentDateTime }}</p>
+
                         </div>
                     </div>
                     <!-- Nested Row 3 -->
                     <div class="row text-white  mb-2">
+
                         <div class="col">
                             <p class="mb-0"> Variable clouds with snow showers. High 11F, winds</p>
                             <p class="d-flex align-items-start "> <span class="fs-1 lh-1 fst-italic me-2">17°</span> E
@@ -190,32 +338,32 @@ onMounted(() => {
 
                             <div class="row mt-2">
                                 <div class="col mb-0">
-                                    <p>high 23°C</p>
-                                    <p>Low 18°C</p>
+                                    <p>high {{ weatherData.main?.temp_max.toFixed(1) || "loading..." }} °C</p>
+                                    <p>low {{ weatherData.main?.temp_min.toFixed(1) || "loading..." }} °C</p>
                                 </div>
                                 <div class="col ">
-                                    <p>high 23°C</p>
-                                    <p>Low 18°C</p>
+                                    <p>high {{ weatherData.main?.temp_max.toFixed(1) || "loading..." }} °C</p>
+                                    <p>low {{ weatherData.main?.temp_min.toFixed(1) || "loading..." }} °C</p>
                                 </div>
                                 <div class="col">
-                                    <p>high 23°C</p>
-                                    <p>Low 18°C</p>
+                                    <p>high {{ weatherData.main?.temp_max.toFixed(1) || "loading..." }} °C</p>
+                                    <p>low {{ weatherData.main?.temp_min.toFixed(1) || "loading..." }} °C</p>
                                 </div>
                                 <div class="col">
-                                    <p>high 23°C</p>
-                                    <p>Low 18°C</p>
+                                    <p>high {{ weatherData.main?.temp_max.toFixed(1) || "loading..." }} °C</p>
+                                    <p>low {{ weatherData.main?.temp_min.toFixed(1) || "loading..." }} °C</p>
                                 </div>
                                 <div class="col">
-                                    <p>high 23°C</p>
-                                    <p>Low 18°C</p>
+                                    <p>high {{ weatherData.main?.temp_max.toFixed(1) || "loading..." }} °C</p>
+                                    <p>low {{ weatherData.main?.temp_min.toFixed(1) || "loading..." }} °C</p>
                                 </div>
                                 <div class="col">
-                                    <p>high 23°C</p>
-                                    <p>Low 18°C</p>
+                                    <p>high {{ weatherData.main?.temp_max.toFixed(1) || "loading..." }} °C</p>
+                                    <p>low {{ weatherData.main?.temp_min.toFixed(1) || "loading..." }} °C</p>
                                 </div>
                                 <div class="col">
-                                    <p>high 23°C</p>
-                                    <p>Low 18°C</p>
+                                    <p>high {{ weatherData.main?.temp_max.toFixed(1) || "loading..." }} °C</p>
+                                    <p>low {{ weatherData.main?.temp_min.toFixed(1) || "loading..." }} °C</p>
                                 </div>
 
                             </div>
@@ -229,32 +377,35 @@ onMounted(() => {
 
                             <div class="row mt-2">
                                 <div class="col">
-                                    <h2>20°</h2>
-                                    <p class="city">Washington D.C</p>
+
+                                    <h2>{{ weatherData.main?.temp.toFixed(1) || "loading..." }}&deg;</h2>
+                                    <p class="city">{{ weatherData.name }}</p>
                                 </div>
                                 <div class="col">
-                                    <h2>20°</h2>
-                                    <p class="city">Oklohama city</p>
+
+                                    <h2>{{ weatherData.main?.temp.toFixed(1) || "loading..." }}&deg;</h2>
+                                    <p class="city">{{ weatherData.name }}</p>
                                 </div>
                                 <div class="col">
-                                    <h2>20°</h2>
-                                    <p class="city">Philadelphia</p>
+                                    <h2>{{ weatherData.main?.temp.toFixed(1) || "loading..." }}&deg;</h2>
+
+                                    <p class="city">{{ weatherData.name }}</p>
                                 </div>
                                 <div class="col">
-                                    <h2>20°</h2>
-                                    <p class="city">San Franscisco</p>
+                                    <h2>{{ weatherData.main?.temp.toFixed(1) || "loading..." }}&deg;</h2>
+                                    <p class="city">{{ weatherData.name }}</p>
                                 </div>
                                 <div class="col ">
-                                    <h2>20°</h2>
-                                    <p class="city">New York City</p>
+                                    <h2>{{ weatherData.main?.temp.toFixed(1) || "loading..." }}&deg;</h2>
+                                    <p class="city">{{ weatherData.name }}</p>
                                 </div>
                                 <div class="col ">
-                                    <h2>20°</h2>
-                                    <p class="city">South Dakota</p>
+                                    <h2>{{ weatherData.main?.temp.toFixed(1) || "loading..." }}&deg;</h2>
+                                    <p class="city">{{ weatherData.name }}</p>
                                 </div>
                                 <div class="col ">
-                                    <h2>20°</h2>
-                                    <p class="city">North Dakota</p>
+                                    <h2>{{ weatherData.main?.temp.toFixed(1) || "loading..." }}&deg;</h2>
+                                    <p class="city">{{ weatherData.name }}</p>
                                 </div>
 
                             </div>
@@ -281,7 +432,7 @@ onMounted(() => {
                 <h4>17</h4>
             </div>
             <div class="col-auto ml-auto">
-                <h4>location</h4>
+                <h4>{{ weatherData.name }}</h4>
             </div>
         </div>
     </div>
@@ -289,7 +440,7 @@ onMounted(() => {
 
 </template>
 <style scoped>
-.search-bar{
+.search-bar {
     display: flex;
     align-items: center;
     padding: 5px;
@@ -359,13 +510,36 @@ input::placeholder {
         radial-gradient(var(--R) at left 50% bottom calc(-1*var(--m)*var(--s)), var(--_g)) calc(50% - 2*var(--s)) calc(50% - var(--s)/2 - var(--b)/2)/calc(4*var(--s)) calc(var(--s) + var(--b)) repeat-x,
         radial-gradient(var(--R) at left 50% top calc(-1*var(--m)*var(--s)), var(--_g)) 50% calc(50% + var(--s)/2 + var(--b)/2)/calc(4*var(--s)) calc(var(--s) + var(--b)) repeat-x;
 }
+
 .fade-text {
-  background: linear-gradient(to right, white, rgba(0, 0, 0, 0));
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  display: inline-block;
+    background: linear-gradient(to right, white, rgba(0, 0, 0, 0));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
 }
+
+.warm {
+    background-image: url('/sunny-cloud.jpg');
+}
+.cold {
+    background-image: url('/snow.jpeg');
+}
+.rainy {
+    background-image: url('/soft-rain.webp');
+}
+.cloudy {
+    background-image: url('/clouds.jpg');
+}
+.stormy {
+    background-image: url('/windy.jpg');
+}
+.foggy {
+    background-image: url('/fog.webp');
+}
+.sunny {
+    background-image: url('/sunny-cloud.jpg');
+}   
 
 
 </style>
