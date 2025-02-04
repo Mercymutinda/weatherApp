@@ -1,24 +1,28 @@
 <script setup>
-import { ref, watch } from 'vue'
-
-
-import { onMounted } from 'vue'; // Import necessary Vue features
+import { ref, watch, onMounted } from 'vue';
 import Chart from 'chart.js/auto'; // Import Chart.js
 
 
 const currentYear = ref(new Date().getFullYear());
 const currentDateTime = ref('');
 const userLocation = ref('');
+const searchQuery = ref('');
+const city_name = ref('');
+
+watch(searchQuery, (newValue) =>{ 
+    console.log('Search query changed to:', newValue);
+    city_name.value = newValue;
+})
+
 
 // const api_key="8398099bebb70f367d90d2ef7994b1";
 const api_key = "c73622a39f2d4383a72ce87dbb5cc01e";
 
 const weatherData = ref([]);
 const isLoading = ref(false);
-const city_name = ref();
 let error = ref(null);
-const lat = ref();
-const long = ref();
+// const lat = ref();
+// const long = ref();
 
 
 const skycondition = ref(null)
@@ -29,9 +33,8 @@ const getWeather = async () => {
     isLoading.value = true;
     try {
 
-        const location = city_name.value || userLocation.value || 'Nairobi'; //if no location detected, it'll forward to Nairobi
-        // const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat.value}&lon=${long.value}&appid=${api_key}`);
-        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=iceland&appid=${api_key}&units=metric`);
+        const location = city_name.value || userLocation.value || 'Mombasa'; //if no location detected, it'll forward to Nairobi
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${api_key}&units=metric`);
         console.log(response);
         if (!response.ok) {
             throw new Error('Failed to fetch weather data');
@@ -57,7 +60,7 @@ const getWeather = async () => {
 
 //location function
 
-const getLocation = () => {
+const getLocation = async() => {
     console.log('Getting location...');
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -119,13 +122,6 @@ onMounted(async () => {
     updateDateTime();
     setInterval(updateDateTime, 1000);
     
-
-    //  // Watch for future changes to userLocation
-    //  watch(userLocation, (newLocation) => {
-    //     if (newLocation) {
-    //         getWeather(); // Fetch weather data whenever userLocation changes
-    //     }
-    // });
 
 
 
@@ -202,7 +198,7 @@ console.log("mabenda", weatherData.weather?.[0]?.main);
 
         :style="{
       backgroundImage: 'url(' + backgroundimg + ')',
-      height: '100vh',
+    //   height: '100vh',
       backgroundSize: 'cover',
       backgroundPosition: 'center'
     }"
@@ -222,7 +218,7 @@ console.log("mabenda", weatherData.weather?.[0]?.main);
                                     <i class="fa-solid fa-user"></i>
 
                                     <input
-                                         v-model="city_name"
+                                         v-model="searchQuery"
                                          @keyup.enter="getWeather"
                                         class=" my-search form-control border-0 border-bottom border-white text-white rounded-0 "
                                         type="search" 
