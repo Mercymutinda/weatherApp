@@ -200,13 +200,13 @@ console.log("mabenda", weatherData.weather?.[0]?.main);
       backgroundImage: 'url(' + backgroundimg + ')',
     //   height: '100vh',
       backgroundSize: 'cover',
-      backgroundPosition: 'center'
+      backgroundPosition: 'center',
     }"
         >
 
 
 
-            <div class="row border rounded ">
+            <div class="row border rounded filter ">
                 <!-- first column -->
                 <div class="col-3 border-end rounded p-2 mb-2 ">
 
@@ -515,27 +515,10 @@ input::placeholder {
     display: inline-block;
 }
 
-.warm {
-    background-image: url('/sunny-cloud.jpg');
+.filter{
+    backdrop-filter: blur(1px);
+    /* background-color: rgba(0, 0, 0, 0.5); */
 }
-.cold {
-    background-image: url('/snow.jpeg');
-}
-.rainy {
-    background-image: url('/soft-rain.webp');
-}
-.cloudy {
-    background-image: url('/clouds.jpg');
-}
-.stormy {
-    background-image: url('/windy.jpg');
-}
-.foggy {
-    background-image: url('/fog.webp');
-}
-.sunny {
-    background-image: url('/sunny-cloud.jpg');
-}   
 
 
 </style>
