@@ -180,6 +180,28 @@ watch(skycondition, (newCondition) => {
 console.log("mabenda", weatherData.weather?.[0]?.main);
 
 
+const descriptiontext = ref('');
+watch(skycondition, (newCondition) => {
+    console.log("Sky condition changed to:", newCondition);
+    
+    const descriptions = {
+        "Clear": `Clear skies and winds of ${weatherData.value?.wind?.speed} m/s. The humidity is ${weatherData.value?.main?.humidity}%.`,
+    "Clouds": `Cloudy skies with a wind speed of ${weatherData.value?.wind?.speed} m/s. Humidity is around ${weatherData.value?.main?.humidity}%.`,
+    "Rain": `Expect rain showers with wind speeds of ${weatherData.value?.wind?.speed} m/s. Humidity is ${weatherData.value?.main?.humidity}%.`,
+    "Snow": `Snowy conditions with wind speeds of ${weatherData.value?.wind?.speed} m/s. Humidity at ${weatherData.value?.main?.humidity}%.`,
+    "Fog": `Foggy atmosphere with winds at ${weatherData.value?.wind?.speed} m/s. Humidity: ${weatherData.value?.main?.humidity}%`,
+    "Storm": `Stormy weather with high winds at ${weatherData.value?.wind?.speed} m/s. Humidity at ${weatherData.value?.main?.humidity}%.`
+    };
+
+    descriptiontext.value = descriptions[newCondition] || "Clear skies";
+});
+
+const detailsButton = ref ('')
+function details(){
+    console.log('Details button clicked');
+    alert(`${ descriptiontext.value }`);
+}
+
 </script>
 <template>
     <div class="container text-light m-0 ">
@@ -240,8 +262,8 @@ console.log("mabenda", weatherData.weather?.[0]?.main);
 
 
                             <div class="row mt-2 my-temp ">
-                                <div class="col-3 ms-3 fs-1 ">
-                                    {{ weatherData.main?.temp.toFixed(1) || "loading..." }}&deg;
+                                <div class="col-3 ms-3 fs-2 ">
+                                    {{ weatherData.main?.temp.toFixed(1) || "loading..." }}&deg;C
                                 </div>
                                 <div class="col-3 ms-5 fs-1">+/-3</div>
                             </div>
@@ -258,8 +280,8 @@ console.log("mabenda", weatherData.weather?.[0]?.main);
                                     <p class=" ms-4 mb-2 ">Safe</p>
                                     <ul>
 
-                                        <li class="m-0">o.oo%-0.9%</li>
-                                        <li>o.9%-11%</li>
+                                        <li class="m-0">0.00%-0.9%</li>
+                                        <li>0.9%-11%</li>
                                     </ul>
                                 </div>
                                 <div class="col-5 mr-3">
@@ -289,8 +311,8 @@ console.log("mabenda", weatherData.weather?.[0]?.main);
                     <!-- Nested Row 5 -->
                     <div class="row  ">
                         <div class="col mb-0 mt-5">
-                            <h4> {{  weatherData.name }}</h4>
-                            <p>{{ weatherData.weather?.[0]?.main}}</p>
+                            <h4 class="text-decoration-underline fs-3 ">  {{  weatherData.name }}</h4>
+                            <p class=" fs-5">{{ descriptiontext }}</p>
                         </div>
                     </div>
 
@@ -305,7 +327,7 @@ console.log("mabenda", weatherData.weather?.[0]?.main);
                     <div class="row  text-white p-2 mb-2">
                         <div class="col">
                             <p class="mt-5"> Weather Forecast </p>
-                            <h1 class="display-3 fw-semibold fade-text  ">{{ weatherData.weather?.[0]?.main }} <br/> {{ weatherData.weather?.[0]?.description }}</h1>
+                            <h1 class="display-3 fw-semibold fade-text  ">{{ weatherData.weather?.[0]?.main }}  <br/> {{ weatherData.weather?.[0]?.description }}</h1>
 
                         </div>
                     </div>
@@ -320,16 +342,16 @@ console.log("mabenda", weatherData.weather?.[0]?.main);
                     <div class="row text-white  mb-2">
 
                         <div class="col">
-                            <p class="mb-0"> Variable clouds with snow showers. High 11F, winds</p>
-                            <p class="d-flex align-items-start "> <span class="fs-1 lh-1 fst-italic me-2">17°</span> E
-                                at 10 to 20 mph. Chance of snow 50%.<br> Snow accumulation less than one inch.</p>
+                            <p class="mb-0"> {{ weatherData.weather?.[0]?.description }} . Wind direction: {{ weatherData.wind?.deg }}&deg;, winds of </p>
+                            <p class="d-flex align-items-start "> <span class="fs-1 lh-1 fst-italic me-2">{{ weatherData.wind?.speed }}</span> m/s
+                                <br> </p>
                         </div>
                     </div>
 
                     <!-- Nested Row 4 -->
                     <div class="row ">
                         <div class="col">
-                            <button class=" see-details rounded-pill bg-secondary  border-0 text-white ">SEE
+                            <button class=" see-details rounded-pill bg-secondary  border-0 text-white  " @click="details ">SEE
                                 DETAILS</button>
 
                             <div class="row mt-2">
@@ -425,10 +447,11 @@ console.log("mabenda", weatherData.weather?.[0]?.main);
         <!-- footer row -->
         <div class="row mt-3">
             <div class="col">
-                <h4>17</h4>
+
+                <h4>{{ weatherData.main?.temp.toFixed(1) || "loading..." }}&deg; </h4>
             </div>
             <div class="col-auto ml-auto">
-                <h4>{{ weatherData.name }}</h4>
+                <h4>{{ weatherData.name }} city weather </h4>
             </div>
         </div>
     </div>
