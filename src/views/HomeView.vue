@@ -199,7 +199,7 @@ watch(skycondition, (newCondition) => {
 const detailsButton = ref ('')
 function details(){
     console.log('Details button clicked');
-    alert(`${ descriptiontext.value }`);
+    alert( `${ descriptiontext.value }`);
 }
 
 </script>
@@ -451,7 +451,7 @@ function details(){
                 <h4>{{ weatherData.main?.temp.toFixed(1) || "loading..." }}&deg; </h4>
             </div>
             <div class="col-auto ml-auto">
-                <h4>{{ weatherData.name }} city weather </h4>
+                <h4>{{ weatherData.name }} weather </h4>
             </div>
         </div>
     </div>
